@@ -1,0 +1,45 @@
+# Step 1: Install dependencies
+!pip install flask flask-login pyngrok
+
+# Step 2: Setup ngrok auth token
+from pyngrok import ngrok, conf
+conf.get_default().auth_token = "2xSfPpjgM7m8aGjaAk9tdSnAm5l_5YDHGkKrXGyTQEyrph6Pg"  # <-- Replace this
+
+# Step 3: Build the Flask App
+import os
+from flask import Flask, request, redirect, url_for, render_template_string, session
+from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
+
+# Initialize app
+app = Flask(__name__)
+app.secret_key = os.urandom(24)
+
+# Login manager
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = 'login'
+
+# In-memory storage
+admin_credentials = {'admin': 'admin123'}  # username: password
+employees = {}  # id: {name, role, email}
+next_id = 1
+
+# User class
+class Admin(UserMixin):
+    def __init__(self, username):
+        self.id = username
+
+@login_manager.user_loader
+def load_user(user_id):
+    if user_id in admin_credentials:
+        return Admin(user_id)
+    return None
+
+# HTML layout
+def render_page(title, body):
+    return render_template_string(f"""
+    <!DOCTYPE html><html><head><title>{title}</title></head><body>
+    <h2>{title}</h2>
+    {body}
+    </body></html>
+    """)
